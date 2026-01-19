@@ -2,7 +2,7 @@
     "name": "Pickleball Scorekeeper",
     "short_name": "Scorekeeper",
     "description": "Simple pickleball scoring app",
-    "start_url": "/",
+    "start_url": "/pickleball-scorekeeper/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#000000",
