@@ -1,4 +1,5 @@
 <script>
+    import { resolve } from '$app/paths';
     import { onMount } from 'svelte';
 
     let maxScore = 25;
@@ -41,7 +42,7 @@
     </div> 
     
 </div>
-<a href="/">Back to Game</a>
+<a href=".">Back to Game</a>
 
 <style>
     .settings-container {

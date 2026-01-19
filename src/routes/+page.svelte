@@ -1,4 +1,5 @@
 <script>
+    import { resolve } from '$app/paths';
     import { onMount } from 'svelte';
 
     let team1Score = 0;
@@ -132,7 +133,7 @@
 
 {#if showMenu}
     <div class="menu">
-        <a href="/settings">Settings</a>
+        <a href="settings">Settings</a>
         <button on:click={resetScores}>Reset Scores</button>
         <button on:click={() => showMenu = false}>Close</button>
     </div>
