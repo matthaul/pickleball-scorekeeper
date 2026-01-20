@@ -1,329 +1,227 @@
-<script>
-    import { resolve } from '$app/paths';
+<script lang="ts">
     import { onMount } from 'svelte';
+    import { goto } from '$app/navigation';
+    import { base } from '$app/paths';
+    import { GAME_MODES } from '$lib/models/gameMode';
+    import { hasGameInProgress } from '$lib/stores/gameState';
 
-    let team1Score = 0;
-    let team2Score = 0;
-    let prevTeam1Score = 0;
-    let prevTeam2Score = 0;
-    let maxScore = 25;
-    let winningMargin = 1;
-    let teamRotationInterval = 4;
-    let gameWon = false;
-    let rotateTeams = false;
-    let winner = '';
-    let showMenu = false;
+    let gameInProgress = false;
 
+    // Check if there's a game to resume
     onMount(() => {
-        // Load initial scores when page loads
-        const saved1 = localStorage.getItem('team1Score');
-        const saved2 = localStorage.getItem('team2Score');
-        const savedMax = localStorage.getItem('maxScore');
-        const savedMargin = localStorage.getItem('winningMargin');
-        const savedRotation = localStorage.getItem('teamRotationInterval');
-
-
-        if (saved1) team1Score = parseInt(saved1);
-        if (saved2) team2Score = parseInt(saved2);
-        if (savedMax) maxScore = parseInt(savedMax);
-        if (savedMargin) winningMargin = parseInt(savedMargin);
-        if (savedRotation) teamRotationInterval = parseInt(savedRotation);
+        gameInProgress = hasGameInProgress();
     });
 
-    function checkWin() {
-        if (team1Score >= maxScore && team1Score - team2Score >= winningMargin) {
-            gameWon = true;
-            winner = 'Team 1';
-        } else if (team2Score >= maxScore && team2Score - team1Score >= winningMargin) {
-            gameWon = true;
-            winner = 'Team 2';
-        }
+    function selectMode(modeId: string) {
+        // Navigate to setup page with mode parameter
+        goto(`${base}/setup?mode=${modeId}`);
     }
 
-    function checkRotate() {
-        const totalScore = team1Score + team2Score;
-        if (teamRotationInterval > 0 && totalScore > 0 && totalScore % teamRotationInterval === 0) {
-            // Logic to rotate teams can be implemented here
-            rotateTeams = true;
-            console.log('Rotate teams!');
-        }
-    }
-
-    function addTeam1() {
-        prevTeam1Score = team1Score;
-        prevTeam2Score = team2Score;
-        team1Score += 1;
-        localStorage.setItem('team1Score', team1Score.toString());
-        checkWin();
-        checkRotate();
-    }
-
-    function addTeam2() {
-        prevTeam1Score = team1Score;
-        prevTeam2Score = team2Score;
-        team2Score += 1;
-        localStorage.setItem('team2Score', team2Score.toString());
-        checkWin();
-        checkRotate();
-    }
-
-    function resetScores() {
-        team1Score = 0;
-        team2Score = 0;
-        gameWon = false;
-        rotateTeams = false;
-        winner = '';
-        localStorage.setItem('team1Score', '0');
-        localStorage.setItem('team2Score', '0');
-    }
-
-    function undo() {
-        team1Score = prevTeam1Score;
-        team2Score = prevTeam2Score;
-        gameWon = false;
-        winner = '';
-        localStorage.setItem('team1Score', team1Score.toString());
-        localStorage.setItem('team2Score', team2Score.toString());
+    function resumeGame() {
+        goto(`${base}/game`);
     }
 </script>
 
-<div class="container">
-    <div class="header" >
-        {#if gameWon}
-        <div class="winner-banner">
-            <h1>{winner} Wins!</h1>
-            <button class="win-btn" on:click={resetScores}>Start New Game</button>
-        </div>
-        {:else if rotateTeams}
-        <div class="rotate-banner">
-            <h1>Rotate Teams!</h1>
-            <button class="rotate-btn" on:click={() => rotateTeams = !rotateTeams}>Confirm</button>
-        </div>
-        {:else}
-        <div class="default-banner">
-            <h1>Score Keeper</h1>
-            <p>First to {maxScore} wins!</p>
-            <p>Winning Margin: {winningMargin}</p>
-            {#if teamRotationInterval > 0}
-                <p>Team Rotation every {teamRotationInterval} points</p>
-            {/if}
-        </div>
-        {/if}
+<div class="home-container">
+    <div class="default-banner">
+        <h1>Score Keeper</h1>
+        <p>Pick a game</p>
+        {#if gameInProgress}
+        <button class="resume-btn" on:click={resumeGame}>
+            Resume Game in Progress
+        </button>
+    {/if}
     </div>
-    <div class="team">
-        <h1>Team 1</h1>
-        <p class="score">{team1Score}</p>
-        {#if !gameWon && !rotateTeams}
-        <button class="score-btn" on:click={addTeam1}>+1</button>
-        {/if}
-    </div>
+    
 
-    <div class ="team">
-        <h1>Team 2</h1>
-        <p class="score">{team2Score}</p>
-        {#if !gameWon && !rotateTeams}
-            <button class="score-btn" on:click={addTeam2}>+1</button>
-        {/if}
+
+    <div class="game-modes-grid">
+        {#each GAME_MODES as mode}
+            <button class="mode-card" on:click={() => selectMode(mode.id)}>
+                <h2>{mode.name}</h2>
+                <div class="mode-details">
+                    <p>{mode.maxScore} points</p>
+                    <p>Win by {mode.winningMargin}</p>
+                    {#if mode.teamRotationInterval > 0}
+                        <p>Rotate every {mode.teamRotationInterval}</p>
+                    {/if}
+                </div>
+                <p class="mode-description">{mode.description}</p>
+            </button>
+        {/each}
     </div>
 </div>
-<div class="footer">
-    <button class="undo-btn" on:click={undo}>Undo</button>
-    <button class="menu-btn" on:click={() => showMenu = !showMenu}>☰</button>
-</div>
 
-{#if showMenu}
-    <div class="menu">
-        <a href="settings">Settings</a>
-        <button on:click={resetScores}>Reset Scores</button>
-        <button on:click={() => showMenu = false}>Close</button>
-    </div>
-{/if}
 <style>
- :root {
-    --footer-height: 80px;
-    --primary: #5ba68c;
-    --primary-dark: #4a8a72;
-    --secondary: #7d6fa5;
-    --dark: #2a2a2a;
-    --dark-border: #404040;
-    --light-bg: #3a3a3a;
-    --border: #454545;
-    --font-family: Arial, sans-serif;
-    --text: #e0e0e0;
-    --bg: #2f2f2f;
-    font-family: var(--font-family);
-    user-select: none;
-    -webkit-user-select: none;
-}
+    /* CSS variables from main game (dark theme) */
+    :root {
+        --primary: #5ba68c;
+        --primary-dark: #4a8a72;
+        --secondary: #7d6fa5;
+        --dark: #2a2a2a;
+        --text: #e0e0e0;
+        --bg: #2f2f2f;
+        --light-bg: #3a3a3a;
+        --border: #454545;
+    }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    -webkit-touch-callout: none;
-    -webkit-tap-highlight-color: transparent;
-    touch-action: none;
-    pointer-events: none;
+    :global(html),
+    :global(body) {
+        background-color: var(--bg);
+        color: var(--text);
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        height: auto !important;
+        overflow: auto !important;
+        min-height: 100vh;
+        overscroll-behavior: none !important;
+        overscroll-behavior-x: none !important;
+        touch-action: pan-y !important;
+    }
 
-}
-:global(html),
-:global(body) {
-    background-color: var(--bg);
-    color: var(--text);
-    height: 100%;
-    overflow: hidden;
-}
-
-button {
-    border: none;
-    cursor: pointer;
-    border-radius: 4px;
-    padding: 1rem 2rem;
-    font-size: 1.5rem;
-    background-color: var(--primary);
-    color: white;
-}
-button,
-a,
-input {
-    touch-action: manipulation;
-    pointer-events: all;
-}
-
-button:active {
-    background-color: var(--primary-dark);
-}
-.winner-banner button {
-    padding: 1rem 2rem;
-    font-size: 1.5rem;
-    margin-top: 1rem;
-    color: white;
-    background-color: var(--secondary);
-}
-.rotate-banner button {
-    padding: 1rem 2rem;
-    font-size: 1.5rem;
-    margin-top: 1rem;
-    color: white;
-    background-color: var(--primary);
-}
-
-.container {
-    display: flex;
-    flex-direction: column;
-    height: calc(100dvh - var(--footer-height));
-    padding-bottom: var(--footer-height);
-}
-.team {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 1rem;
-    background-color: var(--bg);
-    color: var(--text);
-}
-
-.team:first-of-type {
-    background-color: var(--light-bg);
-    border-bottom: 2px solid var(--border);
-}
-
-.score {
-    font-size: 5rem;
-    font-weight: bold;
-    margin: 0.5rem 0;
-    color: var(--text);
-}
-
-.score-btn {
-    padding: 1rem 2rem;
-    font-size: 1.5rem;
-    background-color: var(--primary);
-    color: white;
-}
-
-.score-btn:active {
-    background-color: var(--primary-dark);
-}
-
-.default-banner {
+    .home-container {
+        padding: 1rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        min-height: 100vh;
+        overscroll-behavior: none;
+        touch-action: pan-y;
+    }
+    .default-banner {
     text-align: center;
     padding: 0.5rem;
     background-color: var(--secondary);
+    margin-bottom: 0.5rem;
     color: white;
-    border-radius: 8px;
-}
-.winner-banner {
-    text-align: center;
-    padding: 2rem;
-    background-color: #4caf50;
-    color: white;
-    border-radius: 8px;
-}
-.rotate-banner {
-    text-align: center;
-    padding: 1rem;
-    background-color: var(--secondary);
-    color: white;
-    border-radius: 8px;
-}
+    border-radius: 0px;
+    }
+    .default-banner h1 {
+        margin: 0;
+        font-size: 2rem;
+        color: white;
+        font-weight: 700;
+    }
+    .default-banner p {
+        margin: 0.25rem 0 0.5rem 0;
+        font-size: 1.5rem;
+        color: white;
+    }
 
-.footer {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    display: flex;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    background-color: var(--dark);
-    border-top: 1px solid var(--border);
-}
+    h1 {
+        text-align: center;
+        color: var(--text);
+        margin-bottom: 0.75rem;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
 
-.footer button {
-    background-color: var(--secondary);
-    color: white;
-    padding: 0.5rem 1rem;
-    font-size: 1.5rem;
-}
+    .resume-btn {
+        width: 100%;
+        padding: 0rem;
+        font-size: 1rem;
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        margin-bottom: 0rem;
+        cursor: pointer;
+    }
 
-.undo-btn {
-    flex: 1;
-}
+    .resume-btn:hover {
+        opacity: 0.9;
+    }
 
-.menu-btn {
-    flex-shrink: 0;
-}
+    .game-modes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0.75rem;
+    }
 
-.menu {
-    position: fixed;
-    bottom: var(--footer-height);
-    left: 0;
-    right: 0;
-    background-color: var(--dark);
-    display: flex;
-    flex-direction: column;
-    z-index: 100;
-}
+    .mode-card {
+        background-color: var(--light-bg);
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        padding: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: left;
+        color: var(--text);
+    }
 
-.menu a,
-.menu button {
-    padding: 1rem;
-    background-color: var(--dark);
-    color: white;
-    text-decoration: none;
-    text-align: left;
-    border-bottom: 1px solid var(--dark-border);
-    font-size: 1rem;
-    font-family: var(--font-family);
-    display: block;
-}
+    .mode-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
 
-.menu a:hover,
-.menu button:hover {
-    background-color: var(--dark-border);
-}
+    .mode-card h2 {
+        color: var(--primary);
+        margin: 0 0 0.5rem 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .mode-details {
+        margin: 0.5rem 0;
+        font-size: 0.8rem;
+        color: var(--text);
+        line-height: 1.4;
+    }
+
+    .mode-details p {
+        margin: 0.1rem 0;
+    }
+
+    .mode-description {
+        margin-top: 0.5rem;
+        font-size: 0.75rem;
+        color: #999;
+        font-style: italic;
+        line-height: 1.3;
+    }
+
+    /* Mobile optimization */
+    @media (max-width: 480px) {
+        .home-container {
+            padding: 0rem;
+        }
+        .default-banner {
+            border-radius: 0;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .game-modes-grid {
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .mode-card {
+            padding: 0.5rem;
+        }
+
+        .mode-card h2 {
+            font-size: 1.5rem;
+            margin: 0 0 0.4rem 0;
+        }
+
+        .mode-details {
+            font-size: 1rem;
+        }
+
+        .mode-description {
+            display: none;
+        }
+
+        .resume-btn {
+            padding: 0.65rem;
+            font-size: 0.95rem;
+            margin-bottom: 0rem;
+        }
+    }
 </style>
-
