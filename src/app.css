@@ -1,0 +1,149 @@
+:root {
+    --primary: #63d7a3e7;
+    --primary-dark: #4bb489;
+    --primary-glow: #63d7a355;
+
+    --secondary: #9b7cffed;
+    --secondary-dark: #7a61cc;
+    --secondary-glow: #9b7cff55;
+
+    --bg: #181e1c;
+    --bg-light: #202624;
+    --bg-dark: #131817;
+
+    --text: #e6e8eb;
+    --text-muted: #a3b0ad;
+    --text-light: #ffffff;
+
+    --border: #2b3532;
+    --border-dark: #1b2421;
+
+    --success: #15cd65;
+
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-score: "SF Mono", "Cascadia Mono", "Segoe UI", system-ui, sans-serif;
+
+    --toolbar-height: 60px;
+    --toolbar-padding: 0.5rem;
+}
+
+body {
+    font-family: var(--font-body);
+    background-color: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 0;
+}
+input {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1.1rem;
+    background-color: var(--bg-dark);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+    font-weight: bold;
+}
+
+small {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.btn-primary {
+    background-color: var(--primary);
+    color: var(--text-light);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+}
+
+.btn-secondary {
+    background-color: var(--bg-dark);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+    background-color: var(--border);
+}
+
+/* Card component */
+.card {
+    background-color: var(--bg-light);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 100%;
+}
+
+/* Form components */
+.setting {
+    margin-bottom: 1rem;
+}
+
+.description {
+    text-align: center;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    font-style: italic;
+}
+
+.button-group {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+/* Banner component */
+.banner {
+    text-align: center;
+    padding: 0.5rem;
+    border-radius: 0px;
+}
+
+.banner h1 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.banner p {
+    margin: 0rem 0 0rem 0;
+    font-size: 1rem;
+}
+
+.banner-default {
+    background-color: var(--secondary);
+    color: var(--text-light);
+}
+
+.banner-success {
+    background-color: var(--success);
+    color: var(--text-light);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.banner-info {
+    background-color: var(--secondary);
+    color: var(--text-light);
+    padding: 1rem;
+    border-radius: 8px;
+}

@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
     import { goto } from '$app/navigation';
     import { base } from '$app/paths';
     import { loadGameState, saveGameState, clearGameState } from '$lib/stores/gameState';
+    import { toolbarStore } from '$lib/stores/toolbarStore';
 
     let team1Score = 0;
     let team2Score = 0;
@@ -14,13 +15,12 @@
     let gameWon = false;
     let rotateTeams = false;
     let winner = '';
-    let showMenu = false;
     let currentMode = '';
 
     onMount(() => {
         // Load complete game state from localStorage
         const state = loadGameState();
-        
+
         if (state) {
             team1Score = state.team1Score;
             team2Score = state.team2Score;
@@ -34,6 +34,22 @@
             // No game state - redirect to home
             goto(base || '/');
         }
+
+        // Set up toolbar
+        toolbarStore.setLeftButton({
+            label: 'Undo',
+            action: undo
+        });
+
+        toolbarStore.setMenuItems([
+            { label: 'Pick a New Game', action: returnHome },
+            { label: 'Current Game Settings', href: `${base}/settings` },
+            { label: 'Reset Scores', action: resetScores }
+        ]);
+    });
+
+    onDestroy(() => {
+        toolbarStore.reset();
     });
 
     // Save current state to localStorage
@@ -129,21 +145,21 @@
 <div class="container">
     <div class="header" >
         {#if gameWon}
-        <div class="winner-banner">
+        <div class="banner banner-success">
             <h1>{winner} Wins!</h1>
             <div class="post-game-buttons">
                 
-                <button class="win-btn" on:click={exitGame}>Pick a Game</button>
-                <button class="win-btn" on:click={startOver}>Start Over</button>
+                <button class="btn-win" on:click={exitGame}>Pick a Game</button>
+                <button class="btn-win" on:click={startOver}>Start Over</button>
             </div>
         </div>
         {:else if rotateTeams}
-        <div class="rotate-banner">
+        <div class="banner banner-info">
             <h1>Rotate Teams!</h1>
-            <button class="rotate-btn" on:click={() => rotateTeams = !rotateTeams}>Confirm</button>
+            <button class="btn-rotate" on:click={() => rotateTeams = !rotateTeams}>Confirm</button>
         </div>
         {:else}
-        <div class="default-banner">
+        <div class="banner banner-default">
             <h1>Score Keeper</h1>
             <p>First to {maxScore} wins!</p>
             <p>Winning Margin: {winningMargin}</p>
@@ -157,7 +173,7 @@
         <h1>Team 1</h1>
         <p class="score">{team1Score}</p>
         {#if !gameWon && !rotateTeams}
-        <button class="score-btn" on:click={addTeam1}>+1</button>
+        <button class="btn-score" on:click={addTeam1}>+1</button>
         {/if}
     </div>
 
@@ -165,40 +181,12 @@
         <h1>Team 2</h1>
         <p class="score">{team2Score}</p>
         {#if !gameWon && !rotateTeams}
-            <button class="score-btn" on:click={addTeam2}>+1</button>
+            <button class="btn-score" on:click={addTeam2}>+1</button>
         {/if}
     </div>
 </div>
-<div class="footer">
-    <button class="undo-btn" on:click={undo}>Undo</button>
-    <button class="menu-btn" on:click={() => showMenu = !showMenu}>{showMenu ? '✕' : '☰'}</button>
-</div>
 
-{#if showMenu}
-    <div class="menu">
-        
-        <button on:click={returnHome}>Pick a New Game</button>
-        <a href="{base}/settings">Current Game Settings</a>
-        <button on:click={resetScores}>Reset Scores</button>
-    </div>
-{/if}
 <style>
- :root {
-    --footer-height: 80px;
-    --primary: #5ba68c;
-    --primary-dark: #4a8a72;
-    --secondary: #7d6fa5;
-    --dark: #2a2a2a;
-    --dark-border: #404040;
-    --light-bg: #3a3a3a;
-    --border: #454545;
-    --font-family: Arial, sans-serif;
-    --text: #e0e0e0;
-    --bg: #2f2f2f;
-    font-family: var(--font-family);
-    user-select: none;
-    -webkit-user-select: none;
-}
 
 * {
     margin: 0;
@@ -207,8 +195,6 @@
 }
 :global(html),
 :global(body) {
-    background-color: var(--bg);
-    color: var(--text);
     height: 100%;
 }
 
@@ -219,7 +205,7 @@ button {
     padding: 1rem 2rem;
     font-size: 1.5rem;
     background-color: var(--primary);
-    color: white;
+    color: var(--text);
 }
 button,
 a,
@@ -246,25 +232,25 @@ button:active {
     font-size: 1rem;
 }
 
-.winner-banner button {
+.banner-success button {
     padding: 1rem 1rem;
     font-size: 1.25rem;
-    color: white;
+    color: var(--text-light);
     background-color: var(--secondary);
 }
-.rotate-banner button {
+
+.banner-info button {
     padding: 1rem 2rem;
     font-size: 1.5rem;
     margin-top: 1rem;
-    color: white;
+    color: var(--text-light);
     background-color: var(--primary);
 }
 
 .container {
     display: flex;
     flex-direction: column;
-    height: calc(100dvh - var(--footer-height));
-    padding-bottom: var(--footer-height);
+    height: calc(100dvh - var(--toolbar-height));
     overflow: hidden;
     overscroll-behavior: none;
     touch-action: none;
@@ -282,103 +268,27 @@ button:active {
 }
 
 .team:first-of-type {
-    background-color: var(--light-bg);
+    background-color: var(--bg-light);
     border-bottom: 2px solid var(--border);
 }
 
 .score {
     font-size: 5rem;
     font-weight: bold;
+    font-family: var(--font-score);
     margin: 0.5rem 0;
     color: var(--text);
 }
 
-.score-btn {
+.btn-score {
     padding: 1rem 2rem;
     font-size: 1.5rem;
     background-color: var(--primary);
-    color: white;
+    color: var(--text-light);
 }
 
-.score-btn:active {
+.btn-score:active {
     background-color: var(--primary-dark);
-}
-
-.default-banner {
-    text-align: center;
-    padding: 0.5rem;
-    background-color: var(--secondary);
-    color: white;
-    border-radius: 0px;
-}
-.winner-banner {
-    text-align: center;
-    padding: 1rem;
-    background-color: #4caf50;
-    color: white;
-    border-radius: 8px;
-}
-.rotate-banner {
-    text-align: center;
-    padding: 1rem;
-    background-color: var(--secondary);
-    color: white;
-    border-radius: 8px;
-}
-
-.footer {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    display: flex;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    background-color: var(--dark);
-    border-top: 1px solid var(--border);
-}
-
-.footer button {
-    background-color: var(--secondary);
-    color: white;
-    padding: 0.5rem 1rem;
-    font-size: 1.5rem;
-}
-
-.undo-btn {
-    flex: 1;
-}
-
-.menu-btn {
-    flex-shrink: 0;
-}
-
-.menu {
-    position: fixed;
-    bottom: var(--footer-height);
-    left: 0;
-    right: 0;
-    background-color: var(--dark);
-    display: flex;
-    flex-direction: column;
-    z-index: 100;
-}
-
-.menu a,
-.menu button {
-    padding: 1rem;
-    background-color: var(--dark);
-    color: white;
-    text-decoration: none;
-    text-align: left;
-    border-bottom: 1px solid var(--dark-border);
-    font-size: 1rem;
-    font-family: var(--font-family);
-    display: block;
-}
-
-.menu a:hover,
-.menu button:hover {
-    background-color: var(--dark-border);
 }
 </style>
 
