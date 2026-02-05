@@ -23,6 +23,7 @@
     --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-score: "SF Mono", "Cascadia Mono", "Segoe UI", system-ui, sans-serif;
 
+    --header-height: 0px;
     --toolbar-height: 60px;
     --toolbar-padding: 0.5rem;
 }
@@ -33,6 +34,13 @@ body {
     color: var(--text);
     margin: 0;
     padding: 0;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+input, textarea {
+    -webkit-user-select: text;
+    user-select: text;
 }
 input {
     width: 100%;
@@ -88,9 +96,11 @@ small {
     background-color: var(--bg-light);
     border: 2px solid var(--border);
     border-radius: 12px;
-    padding: 2rem;
+    padding: 1rem;
     max-width: 500px;
     width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
 /* Form components */
@@ -112,26 +122,59 @@ small {
 }
 
 /* Banner component */
+
+@keyframes headerIn {
+from { transform: translateY(-20px); opacity: 0; }
+to   { transform: translateY(0);  opacity: 1; }
+
+}
+
 .banner {
     text-align: center;
-    padding: 0.5rem;
+    padding: 0.75rem;
     border-radius: 0px;
+
+    position: sticky;
+    top: 0;
+    z-index: 300;
+    background-color: var(--secondary);
+    animation: headerIn 500ms ease-out both;
+ 
+}
+
+.banner::after {
+    content: '';
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    bottom: 0;
+    height: 4px;
+    background: linear-gradient(
+      90deg,
+      var(--primary-glow),
+      var(--primary-dark)
+    );
+    opacity: 0.8;
 }
 
 .banner h1 {
     margin: 0;
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  
+    color: var(--text-light);
 }
 
 .banner p {
-    margin: 0rem 0 0rem 0;
+    margin: 0rem;
     font-size: 1rem;
 }
 
 .banner-default {
-    background-color: var(--secondary);
+    background-color: var(--bg-light);
     color: var(--text-light);
+
 }
 
 .banner-success {

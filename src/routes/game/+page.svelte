@@ -43,7 +43,7 @@
 
         toolbarStore.setMenuItems([
             { label: 'Pick a New Game', action: returnHome },
-            { label: 'Current Game Settings', href: `${base}/settings` },
+            { label: 'Current Game Settings', href: `${base}/setup?edit=true` },
             { label: 'Reset Scores', action: resetScores }
         ]);
     });
@@ -160,7 +160,6 @@
         </div>
         {:else}
         <div class="banner banner-default">
-            <h1>Score Keeper</h1>
             <p>First to {maxScore} wins!</p>
             <p>Winning Margin: {winningMargin}</p>
             {#if teamRotationInterval > 0}
@@ -188,14 +187,14 @@
 
 <style>
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+
 :global(html),
 :global(body) {
+    margin: 0;
+    padding: 0;
     height: 100%;
+    overflow: hidden;         
+    overscroll-behavior: none;
 }
 
 button {
@@ -250,33 +249,49 @@ button:active {
 .container {
     display: flex;
     flex-direction: column;
-    height: calc(100dvh - var(--toolbar-height));
+    height: calc(100svh - var(--toolbar-height));
     overflow: hidden;
     overscroll-behavior: none;
     touch-action: none;
 }
 .team {
-    flex: 1;
+    flex: 0.45;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 1rem;
-    background-color: var(--bg);
-    color: var(--text);
+
 }
 
+.team h1 {
+  margin: 0;
+  margin-bottom: 0.25rem; /* small intentional spacing */
+}
+
+
 .team:first-of-type {
-    background-color: var(--bg-light);
-    border-bottom: 2px solid var(--border);
+  justify-content: flex-end;
+}
+
+.team:last-of-type {
+  justify-content: flex-start;
+}
+
+.team:first-of-type .score {
+  margin-bottom: 0.25rem;
+}
+
+.team:last-of-type .score {
+  margin-top: 0.25rem;
 }
 
 .score {
     font-size: 5rem;
     font-weight: bold;
     font-family: var(--font-score);
-    margin: 0.5rem 0;
+    margin: 0rem 0;
     color: var(--text);
 }
 

@@ -4,7 +4,7 @@
     import { base } from '$app/paths';
     import { page } from '$app/stores';
     import { getGameMode, type GameMode } from '$lib/models/gameMode';
-    import { saveGameState, saveCustomMode, loadCustomMode } from '$lib/stores/gameState';
+    import { saveGameState, saveCustomMode, loadCustomMode, loadGameState } from '$lib/stores/gameState';
     import { toolbarStore } from '$lib/stores/toolbarStore';
 
     let selectedMode: GameMode | null | undefined = null;
@@ -12,46 +12,67 @@
     let winningMargin = 2;
     let teamRotationInterval = 0;
 
-    onMount(() => {
-        // Get mode from URL parameter (?mode=rally21)
-        const modeId = $page.url.searchParams.get('mode');
+    // Are we editing an existing game or starting a new one?
+    let isEditMode = false;
 
-        if (modeId === 'custom') {
-            // Load last custom settings if available
-            const lastCustom = loadCustomMode();
-            if (lastCustom) {
-                selectedMode = lastCustom;
-                maxScore = lastCustom.maxScore;
-                winningMargin = lastCustom.winningMargin;
-                teamRotationInterval = lastCustom.teamRotationInterval;
+    onMount(() => {
+        // Check if we're editing an existing game (?edit=true)
+        isEditMode = $page.url.searchParams.get('edit') === 'true';
+
+        if (isEditMode) {
+            // Load current game settings
+            const state = loadGameState();
+            if (state) {
+                selectedMode = getGameMode(state.mode);
+                maxScore = state.maxScore;
+                winningMargin = state.winningMargin;
+                teamRotationInterval = state.teamRotationInterval;
             } else {
-                // Default custom values
-                selectedMode = getGameMode('custom');
-                maxScore = 11;
-                winningMargin = 2;
-                teamRotationInterval = 0;
+                // No game in progress - redirect to home
+                goto(base || '/');
+                return;
             }
         } else {
-            // Load preset mode
-            selectedMode = getGameMode(modeId || 'standard');
-            if (selectedMode) {
-                maxScore = selectedMode.maxScore;
-                winningMargin = selectedMode.winningMargin;
-                teamRotationInterval = selectedMode.teamRotationInterval;
+            // Get mode from URL parameter (?mode=rally21)
+            const modeId = $page.url.searchParams.get('mode');
+
+            if (modeId === 'custom') {
+                // Load last custom settings if available
+                const lastCustom = loadCustomMode();
+                if (lastCustom) {
+                    selectedMode = lastCustom;
+                    maxScore = lastCustom.maxScore;
+                    winningMargin = lastCustom.winningMargin;
+                    teamRotationInterval = lastCustom.teamRotationInterval;
+                } else {
+                    // Default custom values
+                    selectedMode = getGameMode('custom');
+                    maxScore = 11;
+                    winningMargin = 2;
+                    teamRotationInterval = 0;
+                }
+            } else {
+                // Load preset mode
+                selectedMode = getGameMode(modeId || 'standard');
+                if (selectedMode) {
+                    maxScore = selectedMode.maxScore;
+                    winningMargin = selectedMode.winningMargin;
+                    teamRotationInterval = selectedMode.teamRotationInterval;
+                }
             }
         }
 
-        // Set up toolbar
+        // Set up toolbar based on mode
         toolbarStore.setLeftButton({
-            label: 'Start Game',
-            action: startGame
+            label: isEditMode ? 'Save' : 'Start Game',
+            action: isEditMode ? saveSettings : startGame
         });
         toolbarStore.setCancelButton({
             label: 'Cancel',
             action: cancel
         });
         toolbarStore.setMenuItems([
-            { label: 'Pick a New Game', action: cancel }
+            { label: 'Pick a New Game', action: goHome }
         ]);
     });
 
@@ -91,20 +112,39 @@
         goto(`${base}/game`);
     }
 
+    function saveSettings() {
+        // Update existing game state with new settings
+        const state = loadGameState();
+        if (state) {
+            state.maxScore = maxScore;
+            state.winningMargin = winningMargin;
+            state.teamRotationInterval = teamRotationInterval;
+            saveGameState(state);
+        }
+        goto(`${base}/game`);
+    }
+
     function cancel() {
+        // Go back to game if editing, otherwise go home
+        if (isEditMode) {
+            goto(`${base}/game`);
+        } else {
+            goto(base || '/');
+        }
+    }
+
+    function goHome() {
         goto(base || '/');
     }
 </script>
-<div class="banner banner-default">
-    <h1>Score Keeper</h1>
-    <p>Game Settings</p>
-</div>
 <div class="setup-container">
     <div class="card">
         <h1>{selectedMode?.name || 'Game'}</h1>
-        <p class="description">{selectedMode?.description || ''}</p>
+        {#if !isEditMode}
+            <p class="description">{selectedMode?.description || ''}</p>
+        {/if}
 
-        <form on:submit|preventDefault={startGame}>
+        <form on:submit|preventDefault={isEditMode ? saveSettings : startGame}>
             <div class="setting">
                 <label for="maxScore">Points to Win:</label>
                 <input 

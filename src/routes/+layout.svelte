@@ -3,10 +3,13 @@
 	import { onMount } from 'svelte';
 	import favicon from '$lib/assets/favicon.svg';
 	import { toolbarStore } from '$lib/stores/toolbarStore';
+    import { fly } from 'svelte/transition';
 
 	let { children } = $props();
+	let mounted = false;
 
 	onMount(() => {
+		mounted = true;
 		// Block edge swipe gestures for back/forward navigation
 		let startX = 0;
 		let startY = 0;
@@ -59,9 +62,16 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
+<div class="banner">
+	<h1>Score Keeper</h1>
+</div>
+
 <div class="app-container">
 	{@render children()}
 </div>
+
+
+
 
 <!-- Menu overlay (covers everything including toolbar) -->
 {#if $toolbarStore.menuOpen}
@@ -95,6 +105,7 @@
 
 	<button class="btn-toolbar btn-menu" onclick={() => toolbarStore.toggleMenu()}>
 		<span class="menu-icon" class:open={$toolbarStore.menuOpen}>
+		<!-- These 3 spans make the hamburger menu-->
 			<span></span>
 			<span></span>
 			<span></span>
@@ -104,8 +115,9 @@
 
 <style>
 	.app-container {
+		padding-top: var(--header-height);
 		padding-bottom: var(--toolbar-height);
-		min-height: 100vh;
+		min-height: 100%;
 	}
 
 	.toolbar {

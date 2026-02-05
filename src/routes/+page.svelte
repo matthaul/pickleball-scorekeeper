@@ -18,6 +18,10 @@
                 action: resumeGame
             });
         }
+
+        toolbarStore.setMenuItems([
+            { label: 'Manage Teams', href: `${base}/teams` }
+        ]);
     });
 
     onDestroy(() => {
@@ -35,13 +39,6 @@
 </script>
 
 <div class="home-container">
-    <div class="banner banner-default">
-        <h1>Score Keeper</h1>
-        <p>Pick a game</p>
-    </div>
-    
-
-
     <div class="game-modes-grid">
         {#each GAME_MODES as mode}
             <button class="mode-card" on:click={() => selectMode(mode.id)}>
@@ -74,7 +71,7 @@
         padding: 1rem;
         max-width: 1200px;
         margin: 0 auto;
-        min-height: 100vh;
+        min-height: 100%;
         overscroll-behavior: none;
         touch-action: pan-y;
     }
